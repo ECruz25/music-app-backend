@@ -9,4 +9,4 @@ def hello():
         return "Hello"
     else:
         print(request)
-        return jsonify("qweqw")
+        return jsonify(request)
