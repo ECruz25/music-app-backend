@@ -47,8 +47,9 @@ def get_tracks_by_playlist(user_id, playlist_id):
             user_id, track['added_at'], track['track']['id'], track['track']['popularity'], track['track']['explicit'])
     return tracks
 
- def get_get_user_tracks():
-    return spotify.current_user_saved_tracks()
+
+def get_get_user_tracks():
+  return spotify.current_user_saved_tracks()
 
 
 class SpotifyUserSongInPlaylist:
