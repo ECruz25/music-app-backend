@@ -4,3 +4,7 @@ itsdangerous==0.24
 Jinja2==2.10
 MarkupSafe==1.0
 Werkzeug==0.14.1
+spotipy==2.4.4
+psycopg2==2.7.7 
+Flask-SQLAlchemy===2.1 
+Flask-Migrate==1.8.0
