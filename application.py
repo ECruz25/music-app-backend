@@ -8,15 +8,22 @@ import spotipy.util as util
 
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
-# db = SQLAlchemy(app)
+db = SQLAlchemy(app)
 
+database_uri = 'postgresql+psycopg2://{dbuser}:{dbpass}@{dbhost}/{dbname}'.format(
+    dbuser=os.environ['DBUSER'],
+    dbpass=os.environ['DBPASS'],
+    dbhost=os.environ['DBHOST'],
+    dbname=os.environ['DBNAME']
+)
 
-# class Config(object):
-#     DEBUG = False
-#     TESTING = False
-#     CSRF_ENABLED = True
-#     SQLALCHEMY_DATABASE_URI = os.environ['postgresql://postgres@127.0.0.1:5432/music-app-ec']
+app.config.update(
+    SQLALCHEMY_DATABASE_URI=database_uri,
+    SQLALCHEMY_TRACK_MODIFICATIONS=False,
+)
 
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # scope = 'user-library-read'
 # username = "lbfi9hhe1i06wly52k8996i9s"
