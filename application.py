@@ -19,10 +19,12 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 scope = 'user-library-read'
-# spotify = spotipy.Spotify()
 username = "lbfi9hhe1i06wly52k8996i9s"
-token = util.prompt_for_user_token(username, scope, client_id='5c3b13a967bc4bf598898a7eaac6e54a',
-                            client_secret='de48c9b902314b31a712e838ffe43fa1', redirect_uri='https://spotify-app-ec.herokuapp.com/callback')
+client_id = '5c3b13a967bc4bf598898a7eaac6e54a'
+redirect_uri = 'spotify-app-ec://callback'
+client_secret='de48c9b902314b31a712e838ffe43fa1'
+
+token = util.prompt_for_user_token(username = username, scope = scope, client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri)
 
 spotify = spotipy.Spotify(auth=token)
 
