@@ -8,5 +8,4 @@ def hello():
     if request.method == "GET":
         return "Hello"
     else:
-        print(request.form)
-        return jsonify("a")
+        return jsonify(request.form)
