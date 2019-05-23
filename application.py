@@ -30,7 +30,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 @app.route("/", methods=['GET', 'POST'])
 def hello():
     if request.method == "GET":
-        spotify = spotipy.Spotify(auth=request.form['data']['accessToken'])
         # return jsonify(get_get_user_tracks())
         
         return "hello from me"
