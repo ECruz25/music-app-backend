@@ -1,7 +1,11 @@
-from flask import Flask
+from flask import Flask, request
 app = Flask(__name__)
 
 
 @app.route("/", methods=['GET', 'POST'])
 def hello():
-    return "Hello"
+    if request.metod == "GET":
+        return "Hello"
+    else:
+        print(request)
+        return 200
