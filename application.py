@@ -8,14 +8,14 @@ import spotipy.util as util
 
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
-db = SQLAlchemy(app)
+# db = SQLAlchemy(app)
 
 
-class Config(object):
-    DEBUG = False
-    TESTING = False
-    CSRF_ENABLED = True
-    SQLALCHEMY_DATABASE_URI = os.environ['postgresql://postgres@127.0.0.1:5432/music-app-ec']
+# class Config(object):
+#     DEBUG = False
+#     TESTING = False
+#     CSRF_ENABLED = True
+#     SQLALCHEMY_DATABASE_URI = os.environ['postgresql://postgres@127.0.0.1:5432/music-app-ec']
 
 
 # scope = 'user-library-read'
@@ -49,12 +49,12 @@ def get_tracks_by_playlist(user_id, playlist_id):
 
 
 class SpotifyUserSongInPlaylist:
-    __tablename__ = 'spotifyusersonginplaylist'
-    user_id = db.Column(db.String())
-    date_added = db.Column(db.DateTime())
-    track_id = db.Column(db.String())
-    popularity = db.Column(db.Integer())
-    explicit = db.Column(db.Boolean())
+    # __tablename__ = 'spotifyusersonginplaylist'
+    # user_id = db.Column(db.String())
+    # date_added = db.Column(db.DateTime())
+    # track_id = db.Column(db.String())
+    # popularity = db.Column(db.Integer())
+    # explicit = db.Column(db.Boolean())
 
     def __init__(self, user_id, date_added, track_id, popularity, explicit):
         self.user_id = user_id
