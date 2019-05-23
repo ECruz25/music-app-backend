@@ -32,11 +32,13 @@ def hello():
     if request.method == "GET":
         spotify = spotipy.Spotify(auth=request.form['data']['accessToken'])
         # return jsonify(get_get_user_tracks())
-        return jsonify(get_playlist_by_user('lbfi9hhe1i06wly52k8996i9s')[21]['name'])
+        
+        return "hello from me"
         # return jsonify(get_tracks_by_playlist('lbfi9hhe1i06wly52k8996i9s', get_playlist_by_user('lbfi9hhe1i06wly52k8996i9s')[21]['id']))
 
 
 def get_playlist_by_user(user_id):
+    spotify = spotipy.Spotify(auth=request.form['data']['accessToken'])
     playlists = spotify.user_playlists(user_id)
     return playlists['items']
 
