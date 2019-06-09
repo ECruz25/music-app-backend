@@ -44,8 +44,10 @@ class Playlist(db.Model):
     playlist_id = db.Column(db.String())
     name = db.Column(db.String())
     owner = db.Column(db.String())
+    checked = db.Column(db.Boolean())
 
     def __init__(self, playlist_id, name, owner):
         self.playlist_id = playlist_id
         self.name = name
         self.owner = owner
+        self.checked = False

@@ -8,6 +8,7 @@ import pycountry
 import math
 import numpy
 import random
+import pandas
 
 app = Flask(__name__)
 app.config.from_object("config.DevelopmentConfig")
@@ -26,27 +27,40 @@ client_secret='de48c9b902314b31a712e838ffe43fa1'
 def hello():
     if request.method == "GET":
         user_id = 'lbfi9hhe1i06wly52k8996i9s'
-        authToken = "BQBsCKenAloVzogTa-psIh0yq69U4kgoPbHNoj3mFBMsoi4yizjWJBAR06LE4tsRdJks5WvieZMLNaPCnGx8t-YW6HSirwkXmEi2nlfsY8SMtfTR6rhZ0c0hkNgoK0NRp7Ffjqy1WMMplucofW1lJU94typ4L-QZKHRN1FwPxix88OyMQCBk-PamMgHF0fNciGMncWnkLsgg_pTwd9Xk"
+        authToken ="BQBwAtNXf4-pEa_KZbf7Jt9fscJu02JtJaJ5P9t4ditQ8XsXImw9zcRC_RUSlLxOEZKCvmo657A3Rk1DOjX-hBSqP93tpGRt6NbvwUryEtrZ3alOxujab51iTDsI3IAw-cy1ETdWFu4QfeFFPAxQrPCfCYORk614N28WILCEelDzFjORV-32zq8dGSpHK2yA6XiVDxU"
+        
         mind_aspect = "I"
         energy_aspect = "N"
         nature_aspect = "T"
         tactics_aspect = "J"
         identity_aspect = "T"
-        get_all_playlsts(authToken)
-        # query = db.session.query(SpotifyUserSongInPlaylist).filter_by(user_id=user_id)
-        # # save_tracks_by_playlist(user_id, get_playlist_by_user(user_id)[21]['id'])
-        # users = []
-        # for song in query:
-        #     users.append(song.user_id)
+        query = db.session.query(User).filter_by()
+        users = []
+        for user in query:
+            users.append(user)
+        variables = users[0].keys()
+        df = pandas.DataFrame([[getattr(i,j) for j in variables] for i in users], columns = variables)
+        print(df)
+        return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
 
-        # if len(users) <= 0:
-        #     user = User(user_id, mind_aspect, energy_aspect, nature_aspect, tactics_aspect, identity_aspect)
-        #     db.session.add(user)
-        #     db.session.commit()
-        #     for playlistId in get_playlists_by_user(user_id, authToken):
-        #         save_tracks_by_playlist(user_id, playlistId, authToken)
-        
-        return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+def set_user_personalities(user):
+    mind_options = ["I", "E"]
+    mind_weights = [47.95/100, 52.05/100]
+    energy_options = ["S", "N"]
+    energy_weights  = [44.15/100, 55.85/100]
+    nature_options = ["T", "F"]
+    nature_weights  = [45.33/100, 54.67/100]
+    tactics_options = ["J", "P"]
+    tactics_weights  = [48.26/100, 51.74/100]
+    identity_options = ["A", "T"]
+    identity_weights  = [49.5/100, 50.5/100]
+    user.mind_aspect = numpy.random.choice(mind_options, p=mind_weights)
+    user.energy_aspect = numpy.random.choice(energy_options, p=energy_weights)
+    user.nature_aspect = numpy.random.choice(nature_options, p=nature_weights)
+    user.tactics_aspect = numpy.random.choice(tactics_options, p=tactics_weights)
+    user.identity_aspect = numpy.random.choice(identity_options, p=identity_weights)
+    db.session.commit()
+
 
 def get_playlists_by_user(user_id, authToken):
     spotify = spotipy.Spotify(auth=authToken)
@@ -75,7 +89,8 @@ def save_tracks_by_playlist(user_id, playlist_id, authToken):
 def get_all_playlsts(authToken):
     spotify = spotipy.Spotify(auth=authToken)
     letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-    countries = ['ec', 'fr','ar','fi','no','it','lt','ph','tw','nz','ee','tr','us','sv','cr','de','cl','jp','br','hn','gt','ch','hu','ca','pe','be','my','dk','bo','pl','at','pt','se','mx','pa','uy','is','es','cz','ie','nl','sk','co','sg','id','do','lu','gb','global','py','au','lv','gr','hk']
+    # countries = ['ec', 'fr','ar','fi','no','it','lt','ph','tw','nz','ee','tr','us','sv','cr','de','cl','jp','br','hn','gt','ch','hu','ca','pe','be','my','dk','bo','pl','at','pt','se','mx','pa','uy','is','es','cz','ie','nl','sk','co','sg','id','do','lu','gb','global','py','au','lv','gr','hk']
+    countries = ['hn']
     mind_aspects = ['E', 'I']
     energy_aspects = ['S', 'N']
     nature_aspects = ['T', 'F']
@@ -88,7 +103,8 @@ def get_all_playlsts(authToken):
                 pl = spotify.search(letters[letter],type="playlist", market=countries[i], limit=50)
                 offset_amount = math.ceil(pl['playlists']['total'] / pl['playlists']['limit'])
                 for offset in numpy.arange(offset_amount):
-                    playlists = spotify.search(q=letters[letter],type="playlist", market=countries[i], offset=offset, limit=50)['playlists']['items']
+                    playlists = spotify.search(q=letters[letter],type="playlist", market=countries[i], offset=offset+1178, limit=50)['playlists']['items']
+                    print(str((offset*50)+1069)+"/"+str(offset_amount))
                     for playlist in playlists:
                         if playlist['owner']['id'] != 'spotify':
                             db.session.add(Playlist(playlist_id=playlist['id'], name=playlist['name'], owner=playlist['owner']['id']))
