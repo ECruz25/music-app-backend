@@ -25,3 +25,4 @@ Werkzeug==0.14.1
 wrapt==1.11.1
 numpy==1.16.3
 pandas==0.24.2
+surprise==1.0.6

@@ -8,7 +8,10 @@ import pycountry
 import math
 import numpy
 import random
-import pandas
+import pandas as pd
+from surprise import Reader, BaselineOnly, KNNBasic, Dataset, SVD
+from surprise.model_selection import cross_validate
+from collections import defaultdict
 
 app = Flask(__name__)
 app.config.from_object("config.DevelopmentConfig")
@@ -26,22 +29,70 @@ client_secret='de48c9b902314b31a712e838ffe43fa1'
 @app.route("/", methods=['GET', 'POST'])
 def hello():
     if request.method == "GET":
-        user_id = 'lbfi9hhe1i06wly52k8996i9s'
-        authToken ="BQBwAtNXf4-pEa_KZbf7Jt9fscJu02JtJaJ5P9t4ditQ8XsXImw9zcRC_RUSlLxOEZKCvmo657A3Rk1DOjX-hBSqP93tpGRt6NbvwUryEtrZ3alOxujab51iTDsI3IAw-cy1ETdWFu4QfeFFPAxQrPCfCYORk614N28WILCEelDzFjORV-32zq8dGSpHK2yA6XiVDxU"
+        return "finished"
+        # user_id = 'lbfi9hhe1i06wly52k8996i9s'
+        # authToken ="BQBwAtNXf4-pEa_KZbf7Jt9fscJu02JtJaJ5P9t4ditQ8XsXImw9zcRC_RUSlLxOEZKCvmo657A3Rk1DOjX-hBSqP93tpGRt6NbvwUryEtrZ3alOxujab51iTDsI3IAw-cy1ETdWFu4QfeFFPAxQrPCfCYORk614N28WILCEelDzFjORV-32zq8dGSpHK2yA6XiVDxU"
         
-        mind_aspect = "I"
-        energy_aspect = "N"
-        nature_aspect = "T"
-        tactics_aspect = "J"
-        identity_aspect = "T"
-        query = db.session.query(User).filter_by()
-        users = []
-        for user in query:
-            users.append(user)
-        variables = users[0].keys()
-        df = pandas.DataFrame([[getattr(i,j) for j in variables] for i in users], columns = variables)
-        print(df)
-        return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+        # mind_aspect = "I"
+        # energy_aspect = "N"
+        # nature_aspect = "T"
+        # tactics_aspect = "J"
+        # identity_aspect = "T"
+        # query = db.session.query(User).filter_by()
+        # users = []
+        # for user in query:
+        #     users.append(user)
+        # variables = users[0].keys()
+        # df = pandas.DataFrame([[getattr(i,j) for j in variables] for i in users], columns = variables)
+        # print(df)
+        # return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+
+@app.route("/recommend", methods=['GET'])
+def recommend():
+    spotifyusers_songs_in_playlist = db.session.execute("SELECT * FROM spotifyusersonginplaylist b FULL OUTER JOIN public.user v ON b.user_id = v.user_id")
+    spotifyusers_songs_in_playlist = pd.DataFrame(spotifyusers_songs_in_playlist, columns=["id","user_id", "date_added", "track_id", "popularity", "explicit","user_id2","user_tb_id", "mind_aspect", "energy_aspect", "nature_aspect", "tactics_aspect", "identity_aspect", "country"])
+    spotifyusers_songs_in_playlist = spotifyusers_songs_in_playlist.drop(columns=['id','user_id2'])
+    spotifyusers_songs_in_playlist = spotifyusers_songs_in_playlist[spotifyusers_songs_in_playlist['popularity']>70]
+    spotifyusers_songs_in_playlist['personality'] = spotifyusers_songs_in_playlist['mind_aspect'] + spotifyusers_songs_in_playlist['energy_aspect'] + spotifyusers_songs_in_playlist['nature_aspect'] + spotifyusers_songs_in_playlist['tactics_aspect'] 
+    
+    songs = spotifyusers_songs_in_playlist['track_id'].reset_index()
+    songs = songs.drop(columns=['index'])
+    songs = songs.drop_duplicates(subset=['track_id']).reset_index()
+    songs = songs.rename(columns={'track_id':'spotify_track_id','index': 'track_id'})
+
+    spotifyusers_songs_in_playlist['listened'] = 1
+    spotifyusers_songs_in_playlist = spotifyusers_songs_in_playlist.drop(columns=['mind_aspect', 'energy_aspect', 'nature_aspect', 'tactics_aspect', 'identity_aspect', 'date_added', 'explicit', 'popularity', 'user_tb_id'])
+    grouped = spotifyusers_songs_in_playlist
+    spotifyusers_songs_in_playlist['user_song'] = spotifyusers_songs_in_playlist['user_id']+spotifyusers_songs_in_playlist['track_id']
+    grouped['user_song'] = grouped['user_id'] + grouped['track_id']
+    grouped = grouped.groupby(['user_song']).agg({'listened': 'count'}).reset_index()
+    grouped.rename(columns = {'listened': 'score'},inplace=True)
+    grouped = grouped.merge(spotifyusers_songs_in_playlist, on="user_song")
+    grouped = grouped.drop_duplicates(subset=['user_song'])
+    grouped = grouped.drop(columns=['country','listened', 'user_song'])
+    user_songs_ratings = grouped
+    del grouped
+
+    ratings_dict = {'itemID': list(user_songs_ratings.track_id),
+                    'userID': list(user_songs_ratings.user_id),
+                    'rating': list(user_songs_ratings.score)}
+    df = pd.DataFrame(ratings_dict)
+
+    reader = Reader(rating_scale=(0.5, 5.0))
+    data = Dataset.load_from_df(df[['userID', 'itemID', 'rating']], reader)
+    trainset = data.build_full_trainset()
+    algo = SVD()
+    algo.fit(trainset)
+    testset = trainset.build_anti_testset()
+    predictions = algo.test(testset)
+    top_n = get_top_n(predictions, n=10)
+    user_ids = []
+    for uid, user_ratings in top_n.items():
+        for user_rating in user_ratings:
+            user_ids.append([uid, user_rating[0]])
+    user_ids = pd.DataFrame(user_ids, columns=['user_id', 'user_ratings'])
+    return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+
 
 def set_user_personalities(user):
     mind_options = ["I", "E"]
@@ -114,3 +165,14 @@ def get_all_playlsts(authToken):
         except Exception as e:
             print(e)
         print("finished with country: "+ countries[i-1])
+
+def get_top_n(predictions, n=10):
+    top_n = defaultdict(list)
+    for uid, iid, true_r, est, _ in predictions:
+        top_n[uid].append((iid, est))
+
+    for uid, user_ratings in top_n.items():
+        user_ratings.sort(key=lambda x: x[1], reverse=True)
+        top_n[uid] = user_ratings[:n]
+
+    return top_n

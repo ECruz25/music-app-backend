@@ -7,7 +7,8 @@ class Config(object):
     TESTING = False
     CSRF_ENABLED = True
     SECRET_KEY = 'this-really-needs-to-be-changed'
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:root@localhost/music_app_ec'
+    # dbname='{your_database}' user='edwin@music-app-ec-server' host='music-app-ec-server.postgres.database.azure.com’ password='{your_password}' port='5432' sslmode='true'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://edwin:Password123@music-app-ec-server/music_app_ec'
 
 
 class ProductionConfig(Config):
