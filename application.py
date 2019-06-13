@@ -59,17 +59,17 @@ def exists_in_db(user_id):
 @app.route("/save-user", methods=["POST"])
 def save_user():
     req_data = request.get_json(force=True) # force=True will make sure this works even if a client does not specify application/json
-    user_id = req_data['userId']
-    mind_aspect = req_data['mind_aspect']
-    tactics_aspect = req_data['tactics_aspect']
-    energy_aspect = req_data['energy_aspect']
-    nature_aspect = req_data['nature_aspect']
-    identity_aspect = req_data['identity_aspect']
-    country = req_data['country']
-    user = User(user_id=user_id, mind_aspect=mind_aspect, tactics_aspect=tactics_aspect,
-                energy_aspect=energy_aspect, nature_aspect=nature_aspect, identity_aspect=identity_aspect, country=country)
-    db.session.add(user)
-    return user
+    # user_id = req_data['userId']
+    # mind_aspect = req_data['mindAspect']
+    # tactics_aspect = req_data['tacticsAspect']
+    # energy_aspect = req_data['energyAspect']
+    # nature_aspect = req_data['natureAspect']
+    # identity_aspect = req_data['identityAspect']
+    # country = req_data['country']
+    # user = User(user_id=user_id, mind_aspect=mind_aspect, tactics_aspect=tactics_aspect,
+    #             energy_aspect=energy_aspect, nature_aspect=nature_aspect, identity_aspect=identity_aspect, country=country)
+    # db.session.add(user)
+    return req_data
 
 @app.route("/save-playlists", methods=['POST'])
 def save_playlist():
