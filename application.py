@@ -8,8 +8,6 @@ import math
 import numpy
 import random
 import pandas as pd
-from surprise import Reader, BaselineOnly, KNNBasic, Dataset, SVD
-from surprise.model_selection import cross_validate
 from collections import defaultdict
 
 app = Flask(__name__)
@@ -91,6 +89,8 @@ def recommend(user_id):
         songs_by_users.append(song)
 
     if len(songs_by_users) > 10 :
+        from surprise import Reader, BaselineOnly, KNNBasic, Dataset, SVD
+        from surprise.model_selection import cross_validate
         spotifyusers_songs_in_playlist = db.session.execute(    
             "SELECT * FROM spotifyusersonginplaylist b FULL OUTER JOIN public.user v ON b.user_id = v.user_id")
         spotifyusers_songs_in_playlist = pd.DataFrame(spotifyusers_songs_in_playlist, columns=["id", "user_id", "date_added", "track_id", "popularity", "explicit", "user_id2", "user_tb_id", "mind_aspect", "energy_aspect", "nature_aspect", "tactics_aspect", "identity_aspect", "country"])
