@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, json
+
 from flask_cors import CORS
 import os
 from flask_sqlalchemy import SQLAlchemy
