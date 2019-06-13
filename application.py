@@ -13,7 +13,6 @@ import pandas as pd
 from collections import defaultdict
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/*": {"origins": "*"}})
 app.config.from_object("config.DevelopmentConfig")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
