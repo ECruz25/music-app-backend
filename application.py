@@ -58,8 +58,16 @@ def exists_in_db(user_id):
 
 @app.route("/save-user", methods=["POST"])
 def save_user():
-    user = User(user_id=request.data.user.user_id, mind_aspect=request.data.user.mind_aspect, tactics_aspect=request.data.user.tactics_aspect,
-                energy_aspect=request.data.user.energy_aspect, nature_aspect=request.data.user.nature_aspect, identity_aspect=request.data.user.identity_aspect, country=request.data.user.country)
+    req_data = request.get_json(force=True) # force=True will make sure this works even if a client does not specify application/json
+    user_id = req_data['userId']
+    mind_aspect = req_data['mind_aspect']
+    tactics_aspect = req_data['tactics_aspect']
+    energy_aspect = req_data['energy_aspect']
+    nature_aspect = req_data['nature_aspect']
+    identity_aspect = req_data['identity_aspect']
+    country = req_data['country']
+    user = User(user_id=user_id, mind_aspect=mind_aspect, tactics_aspect=tactics_aspect,
+                energy_aspect=energy_aspect, nature_aspect=nature_aspect, identity_aspect=identity_aspect, country=country)
     db.session.add(user)
     return user
 
