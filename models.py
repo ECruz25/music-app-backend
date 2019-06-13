@@ -1,5 +1,6 @@
 from application import db
 from sqlalchemy.dialects.postgresql import JSON
+from datetime import date
 
 class SpotifyUserSongInPlaylist(db.Model):
     __tablename__ = 'spotifyusersonginplaylist'
@@ -16,7 +17,6 @@ class SpotifyUserSongInPlaylist(db.Model):
         self.track_id = track_id
         self.popularity = popularity
         self.explicit = explicit
-
 
 class User(db.Model):
     __tablename__ = 'user'
@@ -51,3 +51,15 @@ class Playlist(db.Model):
         self.name = name
         self.owner = owner
         self.checked = False
+
+class Recommendation(db.Model):
+    __tablename__ = 'recommendation'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String())
+    track_id = db.Column(db.String())
+    date_recommended_for = db.Column(db.Date())
+
+    def __init__(self, user_id, track_id):
+        self.track_id = track_id
+        self.user_id = user_id
+        self.date_recommended_for = date.today()
