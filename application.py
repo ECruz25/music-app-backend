@@ -4,7 +4,6 @@ import os
 from flask_sqlalchemy import SQLAlchemy
 import spotipy
 import spotipy.util as util
-import pycountry
 import math
 import numpy
 import random
