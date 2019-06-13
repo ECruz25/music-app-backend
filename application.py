@@ -59,7 +59,7 @@ def exists_in_db(user_id):
 @app.route("/save-user", methods=["POST"])
 def save_user():
     req_data = request.get_json(force=True) # force=True will make sure this works even if a client does not specify application/json
-    # user_id = req_data['userId']
+    user_id = req_data['userId']
     # mind_aspect = req_data['mindAspect']
     # tactics_aspect = req_data['tacticsAspect']
     # energy_aspect = req_data['energyAspect']
@@ -69,15 +69,28 @@ def save_user():
     # user = User(user_id=user_id, mind_aspect=mind_aspect, tactics_aspect=tactics_aspect,
     #             energy_aspect=energy_aspect, nature_aspect=nature_aspect, identity_aspect=identity_aspect, country=country)
     # db.session.add(user)
-    return req_data
+    return user_id
 
-@app.route("/save-playlists", methods=['POST'])
-def save_playlist():
-    user_id = request.data.user_id
-    authToken = request.data.authToken
+@app.route("/save-playlists/<user_id>/<authToken>", methods=['GET'])
+def save_playlist(user_id, authToken):
     for playlistId in get_playlists_by_user(user_id, authToken):
         save_tracks_by_playlist(user_id, playlistId, authToken)
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+
+@app.route("/simple-recommend/<user_id>", methods=['GET'])
+def simple_recommend(user_id):
+    query = db.session.execute("SELECT * FROM public.spotifyusersonginplaylist")
+    spotifyusers_songs_in_playlist = []
+    for song in query:
+        spotifyusers_songs_in_playlist.append(song)
+    print(spotifyusers_songs_in_playlist)
+    spotifyusers_songs_in_playlist = pd.DataFrame(spotifyusers_songs_in_playlist, columns=["id", "user_id", "date_added", "track_id", "popularity", "explicit"])
+    pm = popularity_recommender_py()
+    pm.create(spotifyusers_songs_in_playlist, 'user_id', 'track_id')
+    recommended_songs = pm.recommend(user_id)
+    print(recommended_songs)
+    return recommended_songs['track_id'].to_json()
+
 
 # @app.route("/recommend", methods=['GET'])
 # def recommend():
@@ -230,3 +243,48 @@ def get_top_n(predictions, n=10):
         top_n[uid] = user_ratings[:n]
 
     return top_n
+
+class popularity_recommender_py():
+    def __init__(self):
+        self.train_data = None
+        self.user_id = None
+        self.item_id = None
+        self.popularity_recommendations = None
+        
+    #Create the popularity based recommender system model
+    def create(self, train_data, user_id, item_id):
+        self.train_data = train_data
+        self.user_id = user_id
+        self.item_id = item_id
+
+        #Get a count of user_ids for each unique song as recommendation score
+        train_data_grouped = train_data.groupby([self.item_id]).agg({self.user_id: 'count'}).reset_index()
+        train_data_grouped.rename(columns = {'user_id': 'score'},inplace=True)
+    
+        #Sort the songs based upon recommendation score
+        train_data_sort = train_data_grouped.sort_values(['score', self.item_id], ascending = [0,1])
+    
+        #Generate a recommendation rank based upon score
+        train_data_sort['Rank'] = train_data_sort['score'].rank(ascending=0, method='first')
+        
+        #Get the top 10 recommendations
+        self.popularity_recommendations = train_data_sort.head(100)
+
+    #Use the popularity based recommender system model to
+    #make recommendations
+    def recommend(self, user_id):    
+        listened_songs = self.train_data[self.train_data['user_id']==user_id]['track_id']
+        recommended_songs = self.popularity_recommendations
+        recommended_songs['user_id'] = user_id
+        #Bring user_id column to the front
+        cols = recommended_songs.columns.tolist()
+        cols = cols[-1:] + cols[:-1]
+        recommended_songs = recommended_songs[cols]
+        
+        for listened_song in listened_songs:
+            recommended_songs = recommended_songs[recommended_songs['track_id']!=listened_song]
+        
+        recommended_songs = recommended_songs.head(10)
+        
+        return recommended_songs
+    
