@@ -123,26 +123,26 @@ def recommend(user_id):
         # user_songs_ratings = grouped
         # del grouped
 
-        ratings_dict = {'itemID': list(user_songs_ratings.track_id),
-                        'userID': list(user_songs_ratings.user_id),
-                        'rating': list(user_songs_ratings.score)}
-        df = pd.DataFrame(ratings_dict)
+        # ratings_dict = {'itemID': list(user_songs_ratings.track_id),
+        #                 'userID': list(user_songs_ratings.user_id),
+        #                 'rating': list(user_songs_ratings.score)}
+        # df = pd.DataFrame(ratings_dict)
 
-        reader = Reader(rating_scale=(0.5, 5.0))
-        data = Dataset.load_from_df(df[['userID', 'itemID', 'rating']], reader)
-        trainset = data.build_full_trainset()
-        algo = SVD()
-        algo.fit(trainset)
-        testset = trainset.build_anti_testset()
-        predictions = algo.test(testset)
-        top_n = get_top_n(predictions, n=10)
-        user_ids = []
-        for uid, user_ratings in top_n.items():
-            for user_rating in user_ratings:
-                if(uid==user_id):
-                    user_ids.append([uid, user_rating[0]])
-        user_ids = pd.DataFrame(user_ids, columns=['user_id', 'user_ratings'])
-        return user_ids.to_json()
+        # reader = Reader(rating_scale=(0.5, 5.0))
+        # data = Dataset.load_from_df(df[['userID', 'itemID', 'rating']], reader)
+        # trainset = data.build_full_trainset()
+        # algo = SVD()
+        # algo.fit(trainset)
+        # testset = trainset.build_anti_testset()
+        # predictions = algo.test(testset)
+        # top_n = get_top_n(predictions, n=10)
+        # user_ids = []
+        # for uid, user_ratings in top_n.items():
+        #     for user_rating in user_ratings:
+        #         if(uid==user_id):
+        #             user_ids.append([uid, user_rating[0]])
+        # user_ids = pd.DataFrame(user_ids, columns=['user_id', 'user_ratings'])
+        # return user_ids.to_json()
     else:
         return recommend_by_popularity(user_id)
 
