@@ -14,7 +14,7 @@ app = Flask(__name__)
 app.config.from_object("config.DevelopmentConfig")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-from models import SpotifyUserSongInPlaylist, User, Playlist
+from models import SpotifyUserSongInPlaylist, User, Playlist, Recommendation
 
 scope = 'user-library-read'
 username = "lbfi9hhe1i06wly52k8996i9s"
@@ -89,62 +89,73 @@ def recommend(user_id):
         songs_by_users.append(song)
 
     if len(songs_by_users) > 10 :
-        # from surprise import Reader, BaselineOnly, KNNBasic, Dataset, SVD
-        # from surprise.model_selection import cross_validate
-        # spotifyusers_songs_in_playlist = db.session.execute(    
-        #     "SELECT * FROM spotifyusersonginplaylist b FULL OUTER JOIN public.user v ON b.user_id = v.user_id")
-        # spotifyusers_songs_in_playlist = pd.DataFrame(spotifyusers_songs_in_playlist, columns=["id", "user_id", "date_added", "track_id", "popularity", "explicit", "user_id2", "user_tb_id", "mind_aspect", "energy_aspect", "nature_aspect", "tactics_aspect", "identity_aspect", "country"])
-        # spotifyusers_songs_in_playlist = spotifyusers_songs_in_playlist.drop(columns=['id', 'user_id2'])
-        # spotifyusers_songs_in_playlist = spotifyusers_songs_in_playlist[
-        #     spotifyusers_songs_in_playlist['popularity'] > 80]
-        # spotifyusers_songs_in_playlist['personality'] = spotifyusers_songs_in_playlist['mind_aspect'] + spotifyusers_songs_in_playlist['energy_aspect'] + \
-        #     spotifyusers_songs_in_playlist['nature_aspect'] + \
-        #     spotifyusers_songs_in_playlist['tactics_aspect']
-
-        # songs = spotifyusers_songs_in_playlist['track_id'].reset_index()
-        # songs = songs.drop(columns=['index'])
-        # songs = songs.drop_duplicates(subset=['track_id']).reset_index()
-        # songs = songs.rename(
-        #     columns={'track_id': 'spotify_track_id', 'index': 'track_id'})
-
-        # spotifyusers_songs_in_playlist['listened'] = 1
-        # spotifyusers_songs_in_playlist = spotifyusers_songs_in_playlist.drop(
-        #     columns=['mind_aspect', 'energy_aspect', 'nature_aspect', 'tactics_aspect', 'identity_aspect', 'date_added', 'explicit', 'popularity', 'user_tb_id'])
-        # grouped = spotifyusers_songs_in_playlist
-        # spotifyusers_songs_in_playlist['user_song'] = spotifyusers_songs_in_playlist['user_id'] + \
-        #     spotifyusers_songs_in_playlist['track_id']
-        # grouped['user_song'] = grouped['user_id'] + grouped['track_id']
-        # grouped = grouped.groupby(['user_song']).agg(
-        #     {'listened': 'count'}).reset_index()
-        # grouped.rename(columns={'listened': 'score'}, inplace=True)
-        # grouped = grouped.merge(spotifyusers_songs_in_playlist, on="user_song")
-        # grouped = grouped.drop_duplicates(subset=['user_song'])
-        # grouped = grouped.drop(columns=['country', 'listened', 'user_song'])
-        # user_songs_ratings = grouped
-        # del grouped
-
-        # ratings_dict = {'itemID': list(user_songs_ratings.track_id),
-        #                 'userID': list(user_songs_ratings.user_id),
-        #                 'rating': list(user_songs_ratings.score)}
-        # df = pd.DataFrame(ratings_dict)
-
-        # reader = Reader(rating_scale=(0.5, 5.0))
-        # data = Dataset.load_from_df(df[['userID', 'itemID', 'rating']], reader)
-        # trainset = data.build_full_trainset()
-        # algo = SVD()
-        # algo.fit(trainset)
-        # testset = trainset.build_anti_testset()
-        # predictions = algo.test(testset)
-        # top_n = get_top_n(predictions, n=10)
-        # user_ids = []
-        # for uid, user_ratings in top_n.items():
-        #     for user_rating in user_ratings:
-        #         if(uid==user_id):
-        #             user_ids.append([uid, user_rating[0]])
-        # user_ids = pd.DataFrame(user_ids, columns=['user_id', 'user_ratings'])
-        # return user_ids.to_json()
+        recommendations = db.session.query(Recommendation).filter_by(user_id=user_id, date_recommended_for=date.today())
+        recomm = []
+        for recommendation in recommendations:
+            recomm.append(recommendation)
+        recomm = pd.DataFrame(recomm, columns=['id', "user_id", "track_id", "date_recommended_for"])
+        recomm = recomm.drop(columns=['id', "user_id", "date_recommended_for"]).drop_duplicates(subset=['track_id'])
+        return recomm.to_json()
     else:
         return recommend_by_popularity(user_id)
+
+@app.route("/run/recommend", methods=['GET'])
+def build_recommender_model():
+    from surprise import Reader, BaselineOnly, KNNBasic, Dataset, SVD
+    from surprise.model_selection import cross_validate
+    spotifyusers_songs_in_playlist = db.session.execute(    
+        "SELECT * FROM spotifyusersonginplaylist b FULL OUTER JOIN public.user v ON b.user_id = v.user_id")
+    spotifyusers_songs_in_playlist = pd.DataFrame(spotifyusers_songs_in_playlist, columns=["id", "user_id", "date_added", "track_id", "popularity", "explicit", "user_id2", "user_tb_id", "mind_aspect", "energy_aspect", "nature_aspect", "tactics_aspect", "identity_aspect", "country"])
+    spotifyusers_songs_in_playlist = spotifyusers_songs_in_playlist.drop(columns=['id', 'user_id2'])
+    spotifyusers_songs_in_playlist = spotifyusers_songs_in_playlist[
+        spotifyusers_songs_in_playlist['popularity'] > 80]
+    spotifyusers_songs_in_playlist['personality'] = spotifyusers_songs_in_playlist['mind_aspect'] + spotifyusers_songs_in_playlist['energy_aspect'] + \
+        spotifyusers_songs_in_playlist['nature_aspect'] + \
+        spotifyusers_songs_in_playlist['tactics_aspect']
+
+    songs = spotifyusers_songs_in_playlist['track_id'].reset_index()
+    songs = songs.drop(columns=['index'])
+    songs = songs.drop_duplicates(subset=['track_id']).reset_index()
+    songs = songs.rename(
+        columns={'track_id': 'spotify_track_id', 'index': 'track_id'})
+
+    spotifyusers_songs_in_playlist['listened'] = 1
+    spotifyusers_songs_in_playlist = spotifyusers_songs_in_playlist.drop(
+        columns=['mind_aspect', 'energy_aspect', 'nature_aspect', 'tactics_aspect', 'identity_aspect', 'date_added', 'explicit', 'popularity', 'user_tb_id'])
+    grouped = spotifyusers_songs_in_playlist
+    spotifyusers_songs_in_playlist['user_song'] = spotifyusers_songs_in_playlist['user_id'] + \
+        spotifyusers_songs_in_playlist['track_id']
+    grouped['user_song'] = grouped['user_id'] + grouped['track_id']
+    grouped = grouped.groupby(['user_song']).agg(
+        {'listened': 'count'}).reset_index()
+    grouped.rename(columns={'listened': 'score'}, inplace=True)
+    grouped = grouped.merge(spotifyusers_songs_in_playlist, on="user_song")
+    grouped = grouped.drop_duplicates(subset=['user_song'])
+    grouped = grouped.drop(columns=['country', 'listened', 'user_song'])
+    user_songs_ratings = grouped
+    del grouped
+
+    ratings_dict = {'itemID': list(user_songs_ratings.track_id),
+                    'userID': list(user_songs_ratings.user_id),
+                    'rating': list(user_songs_ratings.score)}
+    df = pd.DataFrame(ratings_dict)
+
+    reader = Reader(rating_scale=(0.5, 5.0))
+    data = Dataset.load_from_df(df[['userID', 'itemID', 'rating']], reader)
+    trainset = data.build_full_trainset()
+    algo = SVD()
+    algo.fit(trainset)
+    testset = trainset.build_anti_testset()
+    predictions = algo.test(testset)
+    top_n = get_top_n(predictions, n=10)
+    user_ids = []
+    for uid, user_ratings in top_n.items():
+        for user_rating in user_ratings:
+            recommendation = Recommendation(user_id=uid, track_id=user_rating[0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ])
+            db.session.add(recommendation)
+            db.session.commit()
+    user_ids = pd.DataFrame(user_ids, columns=['user_id', 'user_ratings'])
+    return user_ids.to_json()
 
 def recommend_by_popularity(user_id):
     query = db.session.execute("SELECT * FROM public.spotifyusersonginplaylist")
