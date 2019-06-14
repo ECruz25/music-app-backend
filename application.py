@@ -80,7 +80,22 @@ def save_playlist(user_id, authToken):
 
 @app.route("/simple-recommend/<user_id>", methods=['GET'])
 def simple_recommend(user_id):
-    return recommend_by_popularity(user_id)
+    songs_by_users_query =db.session.query(SpotifyUserSongInPlaylist).filter_by(user_id=user_id)
+    songs_by_users = []
+    for song in songs_by_users_query:
+        songs_by_users.append(song)
+
+    if len(songs_by_users) > 10 :
+        recommendations = db.session.query(Recommendation).filter_by(user_id=user_id, date_recommended_for=date.today()).all()
+        recomm = []
+        for rec in recommendations:
+            recomm.append(rec.track_id)
+        recomm1 = pd.DataFrame(recomm, columns=["track_id"])
+        # print(recomm1["id"][0].user_id)
+        # recomm1 = recomm1.drop(columns=['id', "user_id", "date_recommended_for"]).drop_duplicates(subset=['track_id'])
+        return recomm1['track_id'].to_json()
+    else:
+        return recommend_by_popularity(user_id)
 
 @app.route("/recommend/<user_id>", methods=['GET'])
 def recommend(user_id):
