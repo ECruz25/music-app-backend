@@ -110,8 +110,6 @@ def recommend(user_id):
         for rec in recommendations:
             recomm.append(rec.track_id)
         recomm1 = pd.DataFrame(recomm, columns=["track_id"])
-        # print(recomm1["id"][0].user_id)
-        # recomm1 = recomm1.drop(columns=['id', "user_id", "date_recommended_for"]).drop_duplicates(subset=['track_id'])
         return recomm1['track_id'].to_json()
     else:
         return recommend_by_popularity(user_id)
