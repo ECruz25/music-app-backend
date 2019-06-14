@@ -110,7 +110,7 @@ def recommend(user_id):
         for rec in recommendations:
             recomm.append(rec.track_id)
         recomm1 = pd.DataFrame(recomm, columns=["track_id"])
-        if len(recomm1)<=0:
+        if len(recomm)<=0:
             return recommend_by_popularity(user_id)
         else: 
             return recomm1['track_id'].to_json()
