@@ -15,7 +15,7 @@ itsdangerous==0.24
 Jinja2==2.10
 joblib==0.13.2
 lazy-object-proxy==1.4.1
-Mako==1.0.10
+Mako==1.2.2
 MarkupSafe==1.0
 mccabe==0.6.1
 numpy==1.16.4
